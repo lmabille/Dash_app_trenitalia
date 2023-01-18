@@ -4,6 +4,8 @@ import json
 from dash import Dash, html, dcc
 import plotly.express as px
 import pandas as pd
+from datetime import datetime
+
 
 # Opening JSON file
 with open('stations_selection.json') as json_file:
@@ -27,14 +29,43 @@ while 'LastEvaluatedKey' in response:
 dict = {} # IdStation_NumberOfDelay
 
 for stop in stop_in_station:
-    if stop['delay']:
-        if stop['train_type'] in dict:
-            dict[stop['train_type']] += stop['delay']
-        else:
-            if stop['train_type'] == "FR":
-                dict[' FR'] += stop['delay']
+    date = datetime.fromtimestamp(stop['departing_time']/1000)  if int(stop['departing_time']) > 0 else None
+    stop['departing_time'] = date
+
+
+for stop in stop_in_station:
+    if stop['train_number'] in dict:
+        dict[stop['train_number']].append(stop)
+    else:
+        dict[stop['train_number']] = [stop]
+
+my_dic = {}
+big_dic = {}
+for train_number in dict.keys():
+    liste_de_trajet = dict[train_number]
+    for trajet in liste_de_trajet:
+        if trajet['departing_time']:
+            my_date = f"{trajet['departing_time'].day}.{trajet['departing_time'].month}"
+            if my_date in my_dic:
+                my_dic[my_date].append(trajet)
             else:
-                dict[stop['train_type']] = stop['delay']
+                my_dic[my_date] = [trajet]
+    for elt in my_dic.keys():
+        if elt in big_dic.keys():
+            big_dic[elt].append(my_dic)
+        else:
+            big_dic[elt] = [my_dic]
+    my_dic = {}
+
+print(ici)
+
+
+
+
+
+
+
+
 
 print(len(stop_in_station))
 
